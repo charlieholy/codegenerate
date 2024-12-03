@@ -115,7 +115,15 @@ int main() {
 }
 g++ 1.cpp -lcrypto
 
+/////////////////////////////////////////////////////////////////////////////////////
 https://www.secg.org/sec2-v2.pdf
+
+following code will show how to get the original G point
+G = 04 79BE667E F9DCBBAC 55A06295 CE870B07 029BFCDB 2DCE28D9
+59F2815B 16F81798 483ADA77 26A3C465 5DA4FBFC 0E1108A8 FD17B448
+A6855419 9C47D08F FB10D4B8
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <openssl/ec.h>
 #include <openssl/bn.h>
@@ -191,4 +199,161 @@ int main() {
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+publick key to bitcoin addr
+sha256
+ripemd160
+00 + ripemd160 + sha256(sha256())
+base58
+////////////////////////////////////////////////////////////////////////////////////////////
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <openssl/sha.h>
+#include <openssl/ripemd.h>
+#include <sstream>
+#include <random>
+#include <algorithm>
+#include <openssl/evp.h>
+
+const std::string BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+std::vector<unsigned char> ripemd160(const std::vector<unsigned char>& data) {
+    // Initialize the EVP context for RIPEMD160
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    const EVP_MD* ripemd160 = EVP_ripemd160(); // Use the RIPEMD160 hash function
+
+    // Initialize the context
+    EVP_DigestInit_ex(ctx, ripemd160, nullptr);
+
+    // Update the context with the data to be hashed
+    EVP_DigestUpdate(ctx, data.data(), data.size());
+
+    // Prepare the output buffer for the hash
+    std::vector<unsigned char> hash(EVP_MD_size(ripemd160));
+
+    // Finalize the hash and get the result
+    EVP_DigestFinal_ex(ctx, hash.data(), nullptr);
+
+    // Clean up the EVP context
+    EVP_MD_CTX_free(ctx);
+
+    return hash;
+}
+
+// Function to convert bytes to hex string for debugging
+std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {
+    std::ostringstream oss;
+    for (auto byte : bytes) {
+        oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+    }
+    return oss.str();
+}
+
+// Function to perform SHA-256 hashing
+std::vector<uint8_t> sha256(const std::vector<uint8_t>& data) {
+    std::vector<uint8_t> hash(SHA256_DIGEST_LENGTH);
+    SHA256(data.data(), data.size(), hash.data());
+    return hash;
+}
+
+// Function to perform RIPEMD-160 hashing
+//std::vector<uint8_t> ripemd160a(const std::vector<uint8_t>& data) {
+//    std::vector<uint8_t> hash(RIPEMD160_DIGEST_LENGTH);
+//    RIPEMD160(data.data(), data.size(), hash.data());
+//    return hash;
+//}
+
+// Function to encode a vector of bytes into a Base58 string
+std::string base58_encode(const std::vector<unsigned char>& input) {
+    // Base58 encoding
+    std::string result;
+
+    // Handle the case for input being empty
+    if (input.empty()) {
+        return result;
+    }
+
+    // Convert the input byte array to a big integer
+    std::vector<unsigned char> bytes = input;
+    std::vector<unsigned char> encoded;
+
+    // Initialize the carry array with the input data
+    int carry = 0;
+    while (!bytes.empty()) {
+        carry = 0;
+        for (size_t i = 0; i < bytes.size(); ++i) {
+            int temp = (bytes[i] & 0xFF) + carry * 256;
+            bytes[i] = temp / 58;
+            carry = temp % 58;
+        }
+
+        // Remove leading zeroes
+        while (!bytes.empty() && bytes[0] == 0) {
+            bytes.erase(bytes.begin());
+        }
+
+        // Append the current character to the result
+        encoded.push_back(carry);
+    }
+
+    // Convert the big integer to Base58 string
+    for (auto byte : encoded) {
+        result += BASE58_ALPHABET[byte];
+    }
+
+    // Handle the leading zeroes in the input data
+    for (auto byte : input) {
+        if (byte == 0) {
+            result = "1" + result;
+        } else {
+            break;
+        }
+    }
+
+    return result;
+}
+
+int main() {
+    // Example compressed public key (starts with 0x02 or 0x03)
+    std::vector<uint8_t> public_key = {
+        0x02, 0x79, 0xBE, 0x66, 0x7E, 0xF9, 0xDC, 0xBB, 0xAC, 0x55, 0xA0, 0x62, 0x95, 0xCE, 0x87, 0x0B,
+        0x07, 0x02, 0x9B, 0xFC, 0xDB, 0x2D, 0xCE, 0x28, 0xD9, 0x59, 0xF2, 0x81, 0x5B, 0x16, 0xF8, 0x17,
+        0x98
+    };
+
+    // Step 1: Perform SHA-256 on the public key
+    std::vector<uint8_t> sha256_hash = sha256(public_key);
+    std::cout << "SHA-256 Hash: " << bytes_to_hex(sha256_hash) << std::endl;
+
+    std::cout << "256 size" << sha256_hash.size() << std::endl;
+
+    // Step 2: Perform RIPEMD-160 on the SHA-256 hash
+    std::vector<uint8_t> ripemd160_hash = ripemd160(sha256_hash);
+    std::cout << "RIPEMD-160 Hash: " << bytes_to_hex(ripemd160_hash) << std::endl;
+
+    std::cout << "160 size" << ripemd160_hash.size() << std::endl;
+
+    // Step 3: Add version byte (0x00 for Bitcoin Mainnet)
+    std::vector<uint8_t> versioned_hash = {0x00};  // 0x00 indicates mainnet
+    versioned_hash.insert(versioned_hash.end(), ripemd160_hash.begin(), ripemd160_hash.end());
+
+    std::cout << "version size" << versioned_hash.size() << std::endl;
+
+    // Step 4: Calculate checksum by performing double SHA-256
+    std::vector<uint8_t> checksum = sha256(sha256(versioned_hash));
+    checksum.resize(4); // Take first 4 bytes of the second SHA-256 hash
+    std::cout << "Checksum: " << bytes_to_hex(checksum) << std::endl;
+
+    // Step 5: Append the checksum to the versioned hash
+    versioned_hash.insert(versioned_hash.end(), checksum.begin(), checksum.end());
+
+    std::cout << "ccc versoin size" << versioned_hash.size() << std::endl;
+
+    // Step 6: Base58 encode the final result
+    std::string bitcoin_address = base58_encode(versioned_hash);
+    std::cout << "Bitcoin Address: " << bitcoin_address << std::endl;
+
+    return 0;
+}
 
