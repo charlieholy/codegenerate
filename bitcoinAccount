@@ -113,3 +113,82 @@ int main() {
 
     return 0;
 }
+g++ 1.cpp -lcrypto
+
+https://www.secg.org/sec2-v2.pdf
+
+#include <openssl/ec.h>
+#include <openssl/bn.h>
+#include <iostream>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <openssl/ec.h>
+#include <openssl/obj_mac.h>
+#include <openssl/sha.h>
+#include <openssl/ripemd.h>
+
+
+
+int main() {
+    // Step 1: Initialize the curve (secp256k1 for Bitcoin)
+    EC_KEY *key = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (key == nullptr) {
+        std::cerr << "Failed to create EC_KEY object." << std::endl;
+        return 1;
+    }
+
+    // Step 2: Create a BIGNUM to hold the specific private key
+    const char *privateKeyHex = "0000000000000000000000000000000000000000000000000000000000000001";
+    BIGNUM *privateKeyBN = BN_new();
+    if (!BN_hex2bn(&privateKeyBN, privateKeyHex)) {
+        std::cerr << "Failed to convert private key to BIGNUM." << std::endl;
+        EC_KEY_free(key);
+        return 1;
+    }
+
+    // Step 3: Set the private key
+    if (EC_KEY_set_private_key(key, privateKeyBN) != 1) {
+        std::cerr << "Failed to set private key." << std::endl;
+        BN_free(privateKeyBN);
+        EC_KEY_free(key);
+        return 1;
+    }
+
+    // Step 4: Derive the public key from the private key
+    EC_POINT *pubKey = EC_POINT_new(EC_KEY_get0_group(key));
+    if (EC_POINT_mul(EC_KEY_get0_group(key), pubKey, privateKeyBN, nullptr, nullptr, nullptr) != 1) {
+        std::cerr << "Failed to compute public key." << std::endl;
+        EC_POINT_free(pubKey);
+        BN_free(privateKeyBN);
+        EC_KEY_free(key);
+        return 1;
+    }
+
+    if (EC_KEY_set_public_key(key, pubKey) != 1) {
+        std::cerr << "Failed to set public key." << std::endl;
+        EC_POINT_free(pubKey);
+        BN_free(privateKeyBN);
+        EC_KEY_free(key);
+        return 1;
+    }
+
+    // Step 5: Print the keys
+    char *privKeyHex = BN_bn2hex(EC_KEY_get0_private_key(key));
+    char *pubKeyHex = EC_POINT_point2hex(EC_KEY_get0_group(key), EC_KEY_get0_public_key(key),
+                                         POINT_CONVERSION_UNCOMPRESSED, nullptr);
+
+    std::cout << "Private Key: " << privKeyHex << std::endl;
+    std::cout << "Public Key: " << pubKeyHex << std::endl;
+
+    // Free allocated resources
+    OPENSSL_free(privKeyHex);
+    OPENSSL_free(pubKeyHex);
+    EC_POINT_free(pubKey);
+    BN_free(privateKeyBN);
+    EC_KEY_free(key);
+
+    return 0;
+}
+
+
