@@ -1,0 +1,115 @@
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <openssl/ec.h>
+#include <openssl/obj_mac.h>
+#include <openssl/sha.h>
+#include <openssl/ripemd.h>
+
+// Helper function to print bytes as hex
+void printHex(const std::vector<unsigned char>& data) {
+    for (auto byte : data)
+        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)byte;
+    std::cout << std::endl;
+}
+
+// Function to perform SHA-256 hashing
+std::vector<unsigned char> sha256(const std::vector<unsigned char>& data) {
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256(data.data(), data.size(), hash);
+    return std::vector<unsigned char>(hash, hash + SHA256_DIGEST_LENGTH);
+}
+
+// Function to perform RIPEMD-160 hashing
+std::vector<unsigned char> ripemd160(const std::vector<unsigned char>& data) {
+    unsigned char hash[RIPEMD160_DIGEST_LENGTH];
+    RIPEMD160(data.data(), data.size(), hash);
+    return std::vector<unsigned char>(hash, hash + RIPEMD160_DIGEST_LENGTH);
+}
+
+// Base58 encoding (simplified)
+const std::string BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+std::string base58Encode(const std::vector<unsigned char>& data) {
+    std::string result;
+    unsigned long long value = 0;
+
+    // Convert the byte array into a large number
+    for (unsigned char byte : data)
+        value = (value << 8) + byte;
+
+    // Encode the number in Base58
+    while (value > 0) {
+        int remainder = value % 58;
+        result = BASE58_ALPHABET[remainder] + result;
+        value /= 58;
+    }
+
+    // Add leading '1's for each leading zero byte
+    for (unsigned char byte : data) {
+        if (byte == 0)
+            result = '1' + result;
+        else
+            break;
+    }
+
+    return result;
+}
+
+int main() {
+    // Step 1: Generate a private key
+    EC_KEY* key = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (!key || !EC_KEY_generate_key(key)) {
+        std::cerr << "Error generating EC key" << std::endl;
+        return 1;
+    }
+
+    // Get private key
+    const BIGNUM* privKey = EC_KEY_get0_private_key(key);
+    unsigned char privKeyBytes[32];
+    BN_bn2binpad(privKey, privKeyBytes, 32);
+
+    std::cout << "Private Key: ";
+    printHex(std::vector<unsigned char>(privKeyBytes, privKeyBytes + 32));
+
+    // Step 2: Derive the public key
+    const EC_POINT* pubKey = EC_KEY_get0_public_key(key);
+    unsigned char pubKeyBytes[65];
+    size_t pubKeyLen = EC_POINT_point2oct(EC_KEY_get0_group(key), pubKey,
+                                          POINT_CONVERSION_UNCOMPRESSED, pubKeyBytes, sizeof(pubKeyBytes), nullptr);
+
+    std::cout << "Public Key: ";
+    printHex(std::vector<unsigned char>(pubKeyBytes, pubKeyBytes + pubKeyLen));
+
+    // Step 3: Perform SHA-256 followed by RIPEMD-160 on the public key
+    std::vector<unsigned char> sha256Hash = sha256(std::vector<unsigned char>(pubKeyBytes, pubKeyBytes + pubKeyLen));
+    std::vector<unsigned char> ripemd160Hash = ripemd160(sha256Hash);
+
+    std::cout << "RIPEMD-160 Hash: ";
+    printHex(ripemd160Hash);
+
+    // Step 4: Add version byte (0x00 for mainnet) to the hash
+    std::vector<unsigned char> versionedHash = {0x00};
+    versionedHash.insert(versionedHash.end(), ripemd160Hash.begin(), ripemd160Hash.end());
+
+    // Step 5: Perform double SHA-256 to get the checksum
+    std::vector<unsigned char> checksum = sha256(sha256(versionedHash));
+    checksum.resize(4);  // First 4 bytes
+
+    std::cout << "Checksum: ";
+    printHex(checksum);
+
+    // Step 6: Append the checksum to the versioned hash
+    std::vector<unsigned char> finalHash = versionedHash;
+    finalHash.insert(finalHash.end(), checksum.begin(), checksum.end());
+
+    // Step 7: Base58 encode the result to get the Bitcoin address
+    std::string bitcoinAddress = base58Encode(finalHash);
+
+    std::cout << "Bitcoin Address: " << bitcoinAddress << std::endl;
+
+    // Cleanup
+    EC_KEY_free(key);
+
+    return 0;
+}
