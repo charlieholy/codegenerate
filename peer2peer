@@ -1,0 +1,9 @@
+A Bitcoin node, when started, will use DNS seed servers (such as dnsseed.bitcoin.dashjr.org, seed.bitcoin.sipa.be, etc.) to get a list of other Bitcoin nodes to connect to.
+
+nslookup dnsseed.bitcoin.dashjr.org
+Server:         10.171.0.1
+Address:        10.171.0.1#53
+
+Non-authoritative answer:
+Name:   dnsseed.bitcoin.dashjr.org
+Address: 35.201.210.216
