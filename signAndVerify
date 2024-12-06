@@ -1,0 +1,159 @@
+#include <iostream>
+#include <iomanip>
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
+#include <openssl/obj_mac.h>
+#include <openssl/sha.h>
+
+// Function to compute SHA256 hash of a string
+void sha256(const std::string& input, unsigned char output[32]) {
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, input.c_str(), input.size());
+    SHA256_Final(output, &sha256);
+}
+
+// Helper function to print bytes in hexadecimal format
+void printHex(const unsigned char* data, size_t length) {
+    for (size_t i = 0; i < length; i++) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
+    }
+    std::cout << std::dec;
+}
+
+int main() {
+    // Example private key (32 bytes)
+    unsigned char private_key[32] = {
+        0xE9, 0xAB, 0xFF, 0x3C, 0x88, 0xC4, 0x75, 0xD2,
+        0xF1, 0x3A, 0x1C, 0x08, 0x8C, 0xEF, 0x67, 0x4F,
+        0x5A, 0x91, 0xBC, 0x34, 0x7F, 0x54, 0xD6, 0xD3,
+        0x09, 0xAC, 0xA9, 0x4A, 0x84, 0x31, 0x7B, 0x7A
+    };
+
+    // Message to sign
+    std::string message = "Hello, Bitcoin!";
+
+    // Step 1: Hash the message using SHA256
+    unsigned char hash[32];
+    sha256(message, hash);
+
+    // Step 2: Create an EC_KEY object for the secp256k1 curve
+    EC_KEY* ec_key = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (!ec_key) {
+        std::cerr << "Failed to create EC_KEY object." << std::endl;
+        return -1;
+    }
+
+    // Step 3: Set the private key
+    BIGNUM* priv_bn = BN_bin2bn(private_key, sizeof(private_key), nullptr);
+    if (!EC_KEY_set_private_key(ec_key, priv_bn)) {
+        std::cerr << "Failed to set private key." << std::endl;
+        EC_KEY_free(ec_key);
+        BN_free(priv_bn);
+        return -1;
+    }
+
+    // Generate the corresponding public key
+    const EC_GROUP* group = EC_KEY_get0_group(ec_key);
+    EC_POINT* pub_key_point = EC_POINT_new(group);
+    if (!EC_POINT_mul(group, pub_key_point, priv_bn, nullptr, nullptr, nullptr)) {
+        std::cerr << "Failed to generate public key." << std::endl;
+        EC_POINT_free(pub_key_point);
+        EC_KEY_free(ec_key);
+        BN_free(priv_bn);
+        return -1;
+    }
+    EC_KEY_set_public_key(ec_key, pub_key_point);
+
+    // Step 4: Print the public key in hexadecimal (compressed form)
+    char* pub_key_hex = EC_POINT_point2hex(group, pub_key_point, POINT_CONVERSION_COMPRESSED, nullptr);
+    if (pub_key_hex) {
+        std::cout << "Public Key: " << pub_key_hex << std::endl;
+        OPENSSL_free(pub_key_hex);  // Free the string allocated by OpenSSL
+    } else {
+        std::cerr << "Failed to convert public key to hex." << std::endl;
+    }
+
+    // Step 5: Sign the hash using ECDSA
+    ECDSA_SIG* signature = ECDSA_do_sign(hash, sizeof(hash), ec_key);
+    if (!signature) {
+        std::cerr << "Failed to sign the message." << std::endl;
+        EC_POINT_free(pub_key_point);
+        EC_KEY_free(ec_key);
+        BN_free(priv_bn);
+        return -1;
+    }
+
+    // Extract signature components
+    const BIGNUM* r;
+    const BIGNUM* s;
+    ECDSA_SIG_get0(signature, &r, &s);
+
+    unsigned char r_bytes[32];
+    unsigned char s_bytes[32];
+    BN_bn2binpad(r, r_bytes, 32);
+    BN_bn2binpad(s, s_bytes, 32);
+
+    std::cout << "Message: " << message << std::endl;
+    std::cout << "Hash (SHA256): ";
+    printHex(hash, 32);
+    std::cout << std::endl;
+
+    std::cout << "Signature (r): ";
+    printHex(r_bytes, 32);
+    std::cout << std::endl;
+
+    std::cout << "Signature (s): ";
+    printHex(s_bytes, 32);
+    std::cout << std::endl;
+
+    // Step 6: Verify the signature using the public key
+    EC_KEY* verify_key = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (!verify_key) {
+        std::cerr << "Failed to create EC_KEY for verification." << std::endl;
+        return -1;
+    }
+    if (!EC_KEY_set_public_key(verify_key, pub_key_point)) {
+        std::cerr << "Failed to set public key for verification." << std::endl;
+        EC_KEY_free(verify_key);
+        EC_POINT_free(pub_key_point);
+        EC_KEY_free(ec_key);
+        BN_free(priv_bn);
+        return -1;
+    }
+
+    int verify_status = ECDSA_do_verify(hash, sizeof(hash), signature, verify_key);
+    if (verify_status == 1) {
+        std::cout << "Signature verification successful!" << std::endl;
+    } else if (verify_status == 0) {
+        std::cerr << "Signature verification failed!" << std::endl;
+    } else {
+        std::cerr << "Error during verification." << std::endl;
+    }
+
+    // Cleanup
+    ECDSA_SIG_free(signature);
+    EC_POINT_free(pub_key_point);
+    EC_KEY_free(ec_key);
+    EC_KEY_free(verify_key);
+    BN_free(priv_bn);
+
+    return 0;
+}
+g++ 1.cpp -lcrypto
+////////////////////////////////////
+
+(icecc) (icecc) [pechen@l2l3:9.1.2 uplane (master)]# ./a.out
+Public Key: 030FE7EB3D64318B230BA279757F93FB468D1769B3C44882E08AD941FA4FB7D4A7
+Message: Hello, Bitcoin!
+Hash (SHA256): 8a208c3f523f64f8a52434688d9ca442483cd3007a108fd79325a0fab9b71376
+Signature (r): 61620896401d62489434f6c7411c1562092d4fb86dce51af7e0415f827c53c98
+Signature (s): 4bce3ebed84381c09feb5db73fa0f07b6375eaadee2cc6a7d17906cb770f447c
+Signature verification successful!
+(icecc) (icecc) [pechen@l2l3:9.1.2 uplane (master)]# ./a.out
+Public Key: 030FE7EB3D64318B230BA279757F93FB468D1769B3C44882E08AD941FA4FB7D4A7
+Message: Hello, Bitcoin!
+Hash (SHA256): 8a208c3f523f64f8a52434688d9ca442483cd3007a108fd79325a0fab9b71376
+Signature (r): b524c38a90240bdf59e083ee30873ae786fbc389668bcef731cb173ca88fdb67
+Signature (s): 3fc7b86863c6dd48a49b655a06c638b36257b140aaaf8075cf1bc547deec1091
+Signature verification successful!
