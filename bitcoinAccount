@@ -336,6 +336,7 @@ int main() {
 
     // Step 3: Add version byte (0x00 for Bitcoin Mainnet)
     std::vector<uint8_t> versioned_hash = {0x00};  // 0x00 indicates mainnet
+    // std::vector<uint8_t> versioned_hash = {0x6F};  // 0x6F indicates regtest/testnet
     versioned_hash.insert(versioned_hash.end(), ripemd160_hash.begin(), ripemd160_hash.end());
 
     std::cout << "version size" << versioned_hash.size() << std::endl;
