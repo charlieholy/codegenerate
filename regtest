@@ -58,3 +58,70 @@ Client
     }
   ]
 }
+//////////////////////////
+ /////
+Transaction detail
+
+./bin/bitcoin-cli -regtest sendtoaddress bcrt1qy5stvpftg3p7g7q7q49vhuuu7yyx2fmyv4dhp5 1
+
+
+./bin/bitcoin-cli -regtest getblockhash 200
+
+还得再 ./bin/bitcoin-cli -regtest -generate 1
+才能写入到区块
+
+./bin/bitcoin-cli -regtest getblockhash 201
+
+./bin/bitcoin-cli -regtest getblock 00a5e835f04901bb698beb1a2829a69b3badc48fde110ac3ffea5709cd1286bc
+
+ ./bin/bitcoin-cli -regtest gettransaction  a4fba3f949b94439bf486f43881e3affe891b7d52204934293b85fa116d53fa9
+
+ ./bin/bitcoin-cli -regtest  decoderawtransaction 02000000000101d0f93617bdd7b8231f3c51886b5ed8aee7ce7f36ca3221fe231847eaff71b2b30000000000fdffffff02ecd90f24010000001600145ade1448eb58bfba83e2575b615ae1cacb516dfc00e1f505000000001600142520b6052b4443e4781e054acbf39cf1086527640247304402206726e80d23659d7f8718420df2ea7e7a60e50e50b8bff094d9ac12ebd7f3f06c02203301fd009f8ddc9c6877a7e64761ef866e33e625a54f4c8f648962873723a988012102763d6b13d9122d4bfa2e8301c825a15f56e17dc62704936b3f2f1eb2fd6340b0c8000000
+{
+  "txid": "f63bf8a27713acd7d457104598ff288e20dcb11f262913ebc4a6b348d3d3bda9",
+  "hash": "69ec5b065659c7dc2465155ef4f24eae3069342af312d1c68766eacf53734113",
+  "version": 2,
+  "size": 222,
+  "vsize": 141,
+  "weight": 561,
+  "locktime": 200,
+  "vin": [
+    {
+      "txid": "b3b271ffea471823fe2132ca367fcee7aed85e6b88513c1f23b8d7bd1736f9d0",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "",
+        "hex": ""
+      },
+      "txinwitness": [
+        "304402206726e80d23659d7f8718420df2ea7e7a60e50e50b8bff094d9ac12ebd7f3f06c02203301fd009f8ddc9c6877a7e64761ef866e33e625a54f4c8f648962873723a98801",
+        "02763d6b13d9122d4bfa2e8301c825a15f56e17dc62704936b3f2f1eb2fd6340b0"
+      ],
+      "sequence": 4294967293
+    }
+  ],
+  "vout": [
+    {
+      "value": 48.99985900,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "0 5ade1448eb58bfba83e2575b615ae1cacb516dfc",
+        "desc": "addr(bcrt1qtt0pgj8ttzlm4qlz2adkzkhpet94zm0un6pdfh)#dtq4drz0",
+        "hex": "00145ade1448eb58bfba83e2575b615ae1cacb516dfc",
+        "address": "bcrt1qtt0pgj8ttzlm4qlz2adkzkhpet94zm0un6pdfh",
+        "type": "witness_v0_keyhash"
+      }
+    },
+    {
+      "value": 1.00000000,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "0 2520b6052b4443e4781e054acbf39cf108652764",
+        "desc": "addr(bcrt1qy5stvpftg3p7g7q7q49vhuuu7yyx2fmyv4dhp5)#f32x65na",
+        "hex": "00142520b6052b4443e4781e054acbf39cf108652764",
+        "address": "bcrt1qy5stvpftg3p7g7q7q49vhuuu7yyx2fmyv4dhp5",
+        "type": "witness_v0_keyhash"
+      }
+    }
+  ]
+}
