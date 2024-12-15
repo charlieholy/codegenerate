@@ -50,7 +50,7 @@ const privateKeyHex = '000000000000000000000000000000000000000000000000000000000
 const privateKeyBuffer = Buffer.from(privateKeyHex, 'hex');
 
 // Create an ECPair instance with the private key
-const keyPair = ECPair.fromPrivateKey(privateKeyBuffer);
+const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {network: TESTNET});
 
 
 const { address } = bitcoin.payments.p2pkh({
