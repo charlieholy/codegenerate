@@ -1,3 +1,44 @@
+Crypto Calculator - Private Keys Directory  
+
+https://privatekeys.pw/calc
+
+之前的算法发现相同的privatekey 01之所以生成不同的address
+不同在于是否基于compress public key进行计算 后期普遍基于compress是因为节省空间
+
+Uncompressed format
+
+ "vout": [
+    {
+      "value": 13.00000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 751e76e8199196d454941c45d1b3a323f1433bd6 OP_EQUALVERIFY OP_CHECKSIG",
+        "desc": "addr(mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r)#wdmryvnu",
+        "hex": "76a914751e76e8199196d454941c45d1b3a323f1433bd688ac",
+        "address": "mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r",
+        "type": "pubkeyhash"
+      }
+    },
+
+751e76e8199196d454941c45d1b3a323f1433bd6
+
+Uncompressed format
+
+{
+      "value": 12.00000000,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 91b24bf9f5288532960ac687abb035127b1d28a5 OP_EQUALVERIFY OP_CHECKSIG",
+        "desc": "addr(mtoKs9V381UAhUia3d7Vb9GNak8Qvmcsme)#jhgsagu8",
+        "hex": "76a91491b24bf9f5288532960ac687abb035127b1d28a588ac",
+        "address": "mtoKs9V381UAhUia3d7Vb9GNak8Qvmcsme",
+        "type": "pubkeyhash"
+      }
+    }
+
+
+
+
 const crypto = require('crypto');
 const bs58 = require('bs58');
 
