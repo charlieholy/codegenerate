@@ -1,3 +1,4 @@
+//////////////////////////////////  generate random address for testnet
 const bitcoin = require('bitcoinjs-lib')
 const ecc = require('tiny-secp256k1')
 const {ECPairFactory} = require('ecpair')
@@ -32,3 +33,59 @@ key:keyPair.toWIF(),
 pubkey: Buffer.from(keyPair.publicKey).toString('hex'),
 pubshah: bitcoin.crypto.hash160(keyPair.publicKey).toString('hex')});
 
+////////////////////////////////////////////////// generate address from give private key
+const bitcoin = require('bitcoinjs-lib')
+const ecc = require('tiny-secp256k1')
+const {ECPairFactory} = require('ecpair')
+
+const ECPair = ECPairFactory(ecc)
+const TESTNET = bitcoin.networks.testnet;
+
+
+
+
+//const keyPair = ECPair.makeRandom({ network: TESTNET });
+
+const privateKeyHex = '0000000000000000000000000000000000000000000000000000000000000002';
+const privateKeyBuffer = Buffer.from(privateKeyHex, 'hex');
+
+// Create an ECPair instance with the private key
+const keyPair = ECPair.fromPrivateKey(privateKeyBuffer);
+
+
+const { address } = bitcoin.payments.p2pkh({
+        pubkey: Buffer.from(keyPair.publicKey),
+        network: TESTNET,
+});
+console.log({address,
+key:keyPair.toWIF(),
+pubkey: Buffer.from(keyPair.publicKey).toString('hex'),
+pubkey256: bitcoin.crypto.sha256(keyPair.publicKey).toString('hex'),
+pubshah: bitcoin.crypto.hash160(keyPair.publicKey).toString('hex')});
+
+
+////////////////////////////////////////////////// generate address from given wip
+Import privatekey from wip address
+const bitcoin = require('bitcoinjs-lib')
+const ecc = require('tiny-secp256k1')
+const {ECPairFactory} = require('ecpair')
+
+const ECPair = ECPairFactory(ecc)
+//const TESTNET = bitcoin.networks.testnet;
+const TESTNET = bitcoin.networks.bitcoin;
+
+
+
+
+const keyPair = ECPair.fromWIF('cW6mrWmqmtiA7hE6EeMWKAmsGMPt8uAC6yWc6jum33upAgtLqMFf', TESTNET);
+
+const { address } = bitcoin.payments.p2pkh({
+        pubkey: Buffer.from(keyPair.publicKey),
+        network: TESTNET,
+});
+
+//console.log({address});
+console.log({address,
+key:Buffer.from(keyPair.privateKey).toString('hex'),
+pubkey: Buffer.from(keyPair.publicKey).toString('hex'),
+pubshah: bitcoin.crypto.hash160(keyPair.publicKey).toString('hex')});
