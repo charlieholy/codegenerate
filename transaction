@@ -1,0 +1,54 @@
+1. i have private key
+
+Private key '01'  testnet
+{
+  address: 'mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r',
+  key: 'cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87JcbXMTcA',
+  pubkey: '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
+  pubkey256: '0f715baf5d4c2ed329785cef29e562f73488c8a2bb9dbc5700b361d54b9b0554',
+  pubshah: '751e76e8199196d454941c45d1b3a323f1433bd6'
+}
+
+i want to transfer 9bitcoin to this new addr mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H
+
+Private key '02'  testnet
+{
+  address: 'mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H',
+  key: 'cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87K7XCyj5v',
+  pubkey: '02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5',
+  pubkey256: 'b1c9938f01121e159887ac2c8d393a22e4476ff8212de13fe1939de2a236f0a7',
+  pubshah: '06afd46bcdfd22ef94ac122aa11f241244a37ecc'
+}
+
+2. and have unspent vout at this address
+
+"txid": "998f7633de4f7b66172adcd54f061a5652ed4245949c0fb8f379a27df1ef20d2"
+"vout": [
+    {
+      "value": 13.00000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 751e76e8199196d454941c45d1b3a323f1433bd6 OP_EQUALVERIFY OP_CHECKSIG",
+        "desc": "addr(mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r)#wdmryvnu",
+        "hex": "76a914751e76e8199196d454941c45d1b3a323f1433bd688ac",
+        "address": "mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r",
+        "type": "pubkeyhash"
+      }
+    },
+
+3. createrawtransaction
+./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 createrawtransaction  '[{"txid": "998f7633de4f7b66172adcd54f061a5652ed4245949c0fb8f379a27df1ef20d2", "vout": 0}]' '[{"mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H":9}]'
+0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff0100e9a435000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000
+
+
+./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 signrawtransactionwithkey "0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff0100e9a435000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000" '["cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87JcbXMTcA"]'
+{
+  "hex": "0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f99000000006a47304402204a02ab55d316ad087d2e2027e431f7bceb47763f941c44421cb75e4cf4868e5a02207c4d3e897b902ccf156fcaed6a80229601664b3c2c72b7a411463699129d631e01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798fdffffff0100e9a435000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000",
+  "complete": true
+}
+
+
+
+
+
+
