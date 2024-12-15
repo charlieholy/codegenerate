@@ -47,6 +47,41 @@ Private key '02'  testnet
   "complete": true
 }
 
+/////////////////////////////////////////////////////
+./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 decoderawtransaction 0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f99000000006a47304402204a02ab55d316ad087d2e2027e431f7bceb47763f941c44421cb75e4cf4868e5a02207c4d3e897b902ccf156fcaed6a80229601664b3c2c72b7a411463699129d631e01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798fdffffff0100e9a435000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000
+{
+  "txid": "7bb660c14e938a6d353493518c93e8f98a049dc659f04ddd909e9f150b570547",
+  "hash": "7bb660c14e938a6d353493518c93e8f98a049dc659f04ddd909e9f150b570547",
+  "version": 2,
+  "size": 191,
+  "vsize": 191,
+  "weight": 764,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "998f7633de4f7b66172adcd54f061a5652ed4245949c0fb8f379a27df1ef20d2",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "304402204a02ab55d316ad087d2e2027e431f7bceb47763f941c44421cb75e4cf4868e5a02207c4d3e897b902ccf156fcaed6a80229601664b3c2c72b7a411463699129d631e[ALL] 0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "hex": "47304402204a02ab55d316ad087d2e2027e431f7bceb47763f941c44421cb75e4cf4868e5a02207c4d3e897b902ccf156fcaed6a80229601664b3c2c72b7a411463699129d631e01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+      },
+      "sequence": 4294967293
+    }
+  ],
+  "vout": [
+    {
+      "value": 9.00000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 06afd46bcdfd22ef94ac122aa11f241244a37ecc OP_EQUALVERIFY OP_CHECKSIG",
+        "desc": "addr(mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H)#5rzt2ktu",
+        "hex": "76a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac",
+        "address": "mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H",
+        "type": "pubkeyhash"
+      }
+    }
+  ]
+}
 
 
 
