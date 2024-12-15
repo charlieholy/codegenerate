@@ -84,6 +84,57 @@ Private key '02'  testnet
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////
+基于上面的组包发送费率太高失败了
 
 
+//////////////////////////////////////////    input 13 bitcoin --> output 12.998 bitcoin 不然会报错费率太高
+./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 createrawtransaction  '[{"txid": "998f7633de4f7b66172adcd54f061a5652ed4245949c0fb8f379a27df1ef20d2", "vout": 0}]' '[{"mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H":12.998}]'
+0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000
+(icecc) (icecc) [pechen@l2l3:9.1.2 bitcoin-27.0 (master)]#
+./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 signrawtransactionwithkey "0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000" '["cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87JcbXMTcA"]'
+{
+  "hex": "0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f99000000006a47304402202cc208654e54656404ee47dabe872ec7e1bbc28b29657307900a6fea3007c0c302205b89a7e201d1675d9f34d5805274b8a79f374878f29bf49443975e4b3713e80b01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000",
+  "complete": true
+}
+(icecc) (icecc) [pechen@l2l3:9.1.2 bitcoin-27.0 (master)]# ./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 sendrawtransaction  0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f99000000006a47304402202cc208654e54656404ee47dabe872ec7e1bbc28b29657307900a6fea3007c0c302205b89a7e201d1675d9f34d5805274b8a79f374878f29bf49443975e4b3713e80b01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000
+11a405ec6af530e759393c96301f162663ed4fd49b570accdd700b7a8c8ce001
+
+////////////////////////////////////////////
+(icecc) (icecc) [pechen@l2l3:9.1.2 bitcoin-27.0 (master)]# ./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 getrawtransaction 11a405ec6af530e759393c96301f162663ed4fd49b570accdd700b7a8c8ce001
+0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f99000000006a47304402202cc208654e54656404ee47dabe872ec7e1bbc28b29657307900a6fea3007c0c302205b89a7e201d1675d9f34d5805274b8a79f374878f29bf49443975e4b3713e80b01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000
+(icecc) (icecc) [pechen@l2l3:9.1.2 bitcoin-27.0 (master)]# ./bin/bitcoin-cli -regtest -rpcpassword=111111 -rpcuser=111111 decoderawtransaction 0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f99000000006a47304402202cc208654e54656404ee47dabe872ec7e1bbc28b29657307900a6fea3007c0c302205b89a7e201d1675d9f34d5805274b8a79f374878f29bf49443975e4b3713e80b01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000
+{
+  "txid": "11a405ec6af530e759393c96301f162663ed4fd49b570accdd700b7a8c8ce001",
+  "hash": "11a405ec6af530e759393c96301f162663ed4fd49b570accdd700b7a8c8ce001",
+  "version": 2,
+  "size": 191,
+  "vsize": 191,
+  "weight": 764,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "998f7633de4f7b66172adcd54f061a5652ed4245949c0fb8f379a27df1ef20d2",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "304402202cc208654e54656404ee47dabe872ec7e1bbc28b29657307900a6fea3007c0c302205b89a7e201d1675d9f34d5805274b8a79f374878f29bf49443975e4b3713e80b[ALL] 0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "hex": "47304402202cc208654e54656404ee47dabe872ec7e1bbc28b29657307900a6fea3007c0c302205b89a7e201d1675d9f34d5805274b8a79f374878f29bf49443975e4b3713e80b01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+      },
+      "sequence": 4294967293
+    }
+  ],
+  "vout": [
+    {
+      "value": 12.99800000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 06afd46bcdfd22ef94ac122aa11f241244a37ecc OP_EQUALVERIFY OP_CHECKSIG",
+        "desc": "addr(mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H)#5rzt2ktu",
+        "hex": "76a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac",
+        "address": "mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H",
+        "type": "pubkeyhash"
+      }
+    }
+  ]
+}
 
