@@ -1,0 +1,39 @@
+const crypto = require('crypto');
+const bs58 = require('bs58');
+
+function publicKeyToAddress(publicKeyHex, network = 'mainnet') {
+    // Step 1: Convert public key from hex to a Buffer
+    const publicKey = Buffer.from(publicKeyHex, 'hex');
+
+    // Step 2: Perform SHA-256 hash on the public key
+    const sha256Hash = crypto.createHash('sha256').update(publicKey).digest();
+
+    // Step 3: Perform RIPEMD-160 hash on the result of SHA-256
+    const ripemd160Hash = crypto.createHash('ripemd160').update(sha256Hash).digest();
+
+    // Step 4: Add network prefix (0x00 for mainnet, 0x6F for testnet)
+    const networkPrefix = Buffer.from([network === 'mainnet' ? 0x00 : 0x6F]);
+    const prefixedHash = Buffer.concat([networkPrefix, ripemd160Hash]);
+
+    // Step 5: Calculate the checksum (double SHA-256 of prefixed hash)
+    const checksum = crypto.createHash('sha256')
+        .update(crypto.createHash('sha256').update(prefixedHash).digest())
+        .digest()
+        .slice(0, 4);
+
+    // Step 6: Concatenate prefixed hash with checksum
+    const addressBytes = Buffer.concat([prefixedHash, checksum]);
+
+    // Step 7: Encode the result in Base58
+    const address = bs58.encode(addressBytes);
+
+    return address;
+}
+
+// Example usage
+const publicKey = '0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8'; // Your public key
+const mainnetAddress = publicKeyToAddress(publicKey, 'mainnet');
+const testnetAddress = publicKeyToAddress(publicKey, 'testnet');
+
+console.log('Mainnet Address:', mainnetAddress);
+console.log('Testnet Address:', testnetAddress);
