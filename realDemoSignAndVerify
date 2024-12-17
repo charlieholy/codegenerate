@@ -112,7 +112,7 @@ int main() {
 
 /////////////////////////////////
 
-a.js
+a.js  have problem always get the same value
 const crypto = require('crypto');
 const elliptic = require('elliptic');
 
