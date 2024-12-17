@@ -1,0 +1,265 @@
+cpp code version
+
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <openssl/sha.h>
+#include <openssl/ec.h>
+#include <openssl/obj_mac.h>
+#include <openssl/ecdsa.h>
+#include <openssl/bn.h>
+#include <openssl/pem.h>
+
+// Helper to convert hex to binary
+std::vector<unsigned char> HexToBytes(const std::string& hex) {
+    std::vector<unsigned char> bytes;
+    for (size_t i = 0; i < hex.length(); i += 2) {
+        std::string byteString = hex.substr(i, 2);
+        unsigned char byte = (unsigned char) strtol(byteString.c_str(), nullptr, 16);
+        bytes.push_back(byte);
+    }
+    return bytes;
+}
+
+// Helper to convert binary to hex
+std::string BytesToHex(const std::vector<unsigned char>& bytes) {
+    std::ostringstream oss;
+    for (auto b : bytes)
+        oss << std::hex << (int)b;
+    return oss.str();
+}
+
+// Perform SHA256 followed by SHA256 (Double SHA256)
+std::vector<unsigned char> DoubleSHA256(const std::vector<unsigned char>& data) {
+    unsigned char hash1[SHA256_DIGEST_LENGTH];
+    unsigned char hash2[SHA256_DIGEST_LENGTH];
+    SHA256(data.data(), data.size(), hash1);
+    SHA256(hash1, SHA256_DIGEST_LENGTH, hash2);
+    return std::vector<unsigned char>(hash2, hash2 + SHA256_DIGEST_LENGTH);
+}
+
+// Create ECDSA Signature using OpenSSL
+ECDSA_SIG* SignTransaction(const std::vector<unsigned char>& hash, const std::string& privateKeyHex) {
+    BIGNUM* privKeyBn = BN_new();
+    BN_hex2bn(&privKeyBn, privateKeyHex.c_str());
+
+    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_secp256k1);
+    EC_KEY_set_private_key(ecKey, privKeyBn);
+
+    // Sign the hash
+    ECDSA_SIG* sig = ECDSA_do_sign(hash.data(), hash.size(), ecKey);
+
+    // Clean up
+    BN_free(privKeyBn);
+    EC_KEY_free(ecKey);
+    return sig;
+}
+
+// Verify the ECDSA Signature
+bool VerifySignature(const std::vector<unsigned char>& hash, ECDSA_SIG* sig, const std::string& publicKeyHex) {
+    // Convert public key from hex to EC_KEY
+    std::vector<unsigned char> pubKeyBytes = HexToBytes(publicKeyHex);
+    const unsigned char* pubKeyData = pubKeyBytes.data();
+    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_secp256k1);
+    o2i_ECPublicKey(&ecKey, &pubKeyData, pubKeyBytes.size());
+
+    // Verify the signature
+    int verifyStatus = ECDSA_do_verify(hash.data(), hash.size(), sig, ecKey);
+
+    // Clean up
+    EC_KEY_free(ecKey);
+
+    return verifyStatus == 1; // 1 means valid, 0 means invalid
+}
+
+int main() {
+    // Example unsigned raw transaction
+    std::string rawTxHex = "0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000";
+
+    // Private Key and Public Key (Replace with actual keys)
+    std::string privateKeyHex = "0000000000000000000000000000000000000000000000000000000000000001";
+    std::string publicKeyHex = "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";   // Replace with the public key
+
+    // Step 1: Prepare the transaction hash
+    std::vector<unsigned char> txBytes = HexToBytes(rawTxHex);
+    txBytes.push_back(1); // Append SIGHASH_ALL (0x01)
+    std::vector<unsigned char> txHash = DoubleSHA256(txBytes);
+
+    // Step 2: Sign the transaction hash
+    ECDSA_SIG* sig = SignTransaction(txHash, privateKeyHex);
+
+    // Print R and S
+    const BIGNUM* r;
+    const BIGNUM* s;
+    ECDSA_SIG_get0(sig, &r, &s);
+    char* rHex = BN_bn2hex(r);
+    char* sHex = BN_bn2hex(s);
+    std::cout << "Signature R: " << rHex << std::endl;
+    std::cout << "Signature S: " << sHex << std::endl;
+
+    // Step 3: Verify the signature
+    bool isValid = VerifySignature(txHash, sig, publicKeyHex);
+    std::cout << "Signature Verification: " << (isValid ? "Valid" : "Invalid") << std::endl;
+
+    // Clean up
+    OPENSSL_free(rHex);
+    OPENSSL_free(sHex);
+    ECDSA_SIG_free(sig);
+
+    return 0;
+}
+
+
+/////////////////////////////////
+
+a.js
+const crypto = require('crypto');
+const elliptic = require('elliptic');
+
+// Helper function to convert hex to buffer
+function hexToBuffer(hex) {
+    return Buffer.from(hex, 'hex');
+}
+
+// Helper function to convert buffer to hex
+function bufferToHex(buffer) {
+    return buffer.toString('hex');
+}
+
+// Perform SHA256 followed by SHA256 (Double SHA256)
+function doubleSha256(data) {
+    const firstHash = crypto.createHash('sha256').update(data).digest();
+    return crypto.createHash('sha256').update(firstHash).digest();
+}
+
+// Function to sign the transaction hash
+function signTransaction(transactionHash, privateKeyHex) {
+    const privateKey = hexToBuffer(privateKeyHex);
+    const ec = new elliptic.ec('secp256k1');
+    const keyPair = ec.keyFromPrivate(privateKey);
+
+    // Sign the transaction hash
+    const signature = keyPair.sign(transactionHash);
+    return signature;
+}
+
+// Function to verify the ECDSA signature
+function verifySignature(transactionHash, signature, publicKeyHex) {
+    const pubKeyBuffer = hexToBuffer(publicKeyHex);
+    const ec = new elliptic.ec('secp256k1');
+    const key = ec.keyFromPublic(pubKeyBuffer);
+
+    // Verify the signature
+    return key.verify(transactionHash, signature);
+}
+
+// Main function to demonstrate signing and verifying the transaction
+function main() {
+    // Example raw transaction hex
+    const rawTxHex = '0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000';
+
+    // Private key and public key (replace with actual keys)
+    const privateKeyHex = '0000000000000000000000000000000000000000000000000000000000000001';
+    const publicKeyHex = '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';  // Replace with actual public key
+
+    // Step 1: Prepare the transaction hash
+    const txBytes = hexToBuffer(rawTxHex);
+    const txData = Buffer.concat([txBytes, Buffer.from([0x01])]);  // Append SIGHASH_ALL (0x01) to the transaction data
+    const txHash = doubleSha256(txData);
+
+    // Step 2: Sign the transaction hash
+    const signature = signTransaction(txHash, privateKeyHex);
+
+    // Print the R and S components of the signature
+    console.log('Signature R:', signature.r.toString('hex'));
+    console.log('Signature S:', signature.s.toString('hex'));
+
+    // Step 3: Verify the signature
+    const isValid = verifySignature(txHash, signature, publicKeyHex);
+    if (isValid) {
+        console.log("Signature is valid!");
+    } else {
+        console.log("Signature is invalid!");
+    }
+}
+
+main();
+
+///////////////////////////////////////////
+a.py
+
+
+import hashlib
+from ecdsa import SECP256k1, SigningKey, VerifyingKey
+from ecdsa.util import string_to_number
+
+# Helper function to convert hex to bytes
+def hex_to_bytes(hex_str):
+    return bytes.fromhex(hex_str)
+
+# Helper function to convert bytes to hex
+def bytes_to_hex(byte_data):
+    return byte_data.hex()
+
+# Perform SHA256 followed by SHA256 (Double SHA256)
+def double_sha256(data):
+    first_hash = hashlib.sha256(data).digest()
+    return hashlib.sha256(first_hash).digest()
+
+# Function to sign the transaction hash
+def sign_transaction(transaction_hash, private_key_hex):
+    # Convert private key from hex to bytes
+    private_key = bytes.fromhex(private_key_hex)
+    signing_key = SigningKey.from_string(private_key, curve=SECP256k1)
+
+    # Sign the transaction hash
+    signature = signing_key.sign(transaction_hash)
+    return signature
+
+# Function to verify the ECDSA signature
+def verify_signature(transaction_hash, signature, public_key_hex):
+    # Convert the public key from hex to bytes
+    pub_key_bytes = hex_to_bytes(public_key_hex)
+    verifying_key = VerifyingKey.from_string(pub_key_bytes, curve=SECP256k1)
+
+    try:
+        # Verify the signature
+        is_valid = verifying_key.verify(signature, transaction_hash)
+        return is_valid
+    except Exception as e:
+        print(f"Verification error: {e}")
+        return False
+
+# Main function to demonstrate signing and verifying the transaction
+def main():
+    # Example raw transaction hex
+    raw_tx_hex = "0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000"
+
+    # Private key and public key (replace with actual keys)
+    private_key_hex = "0000000000000000000000000000000000000000000000000000000000000001"
+    public_key_hex = "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"  # Replace with actual public key
+
+    # Step 1: Prepare the transaction hash
+    tx_bytes = hex_to_bytes(raw_tx_hex)
+    ttx_bytes = tx_bytes + bytes([1])
+    tx_hash = double_sha256(tx_bytes)
+
+    # Step 2: Sign the transaction hash
+    signature = sign_transaction(tx_hash, private_key_hex)
+
+    # Print the R and S components of the signature
+    r, s = signature[:len(signature)//2], signature[len(signature)//2:]
+    print(f"Signature R: {bytes_to_hex(r)}")
+    print(f"Signature S: {bytes_to_hex(s)}")
+
+    # Step 3: Verify the signature
+    if verify_signature(tx_hash, signature, public_key_hex):
+        print("Signature is valid!")
+    else:
+        print("Signature is invalid!")
+
+if __name__ == "__main__":
+    main()
+
+
+
