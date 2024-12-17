@@ -261,5 +261,65 @@ def main():
 if __name__ == "__main__":
     main()
 
+///////////////////////
+only verify it with nodejs
+
+const crypto = require('crypto');
+const elliptic = require('elliptic');
+
+// Helper function to convert hex to buffer
+function hexToBuffer(hex) {
+    return Buffer.from(hex, 'hex');
+}
+
+// Perform SHA256 followed by SHA256 (Double SHA256)
+function doubleSha256(data) {
+    const firstHash = crypto.createHash('sha256').update(data).digest();
+    return crypto.createHash('sha256').update(firstHash).digest();
+}
+
+// Function to verify the ECDSA signature
+function verifySignature(transactionHash, signature, publicKeyHex) {
+    const pubKeyBuffer = hexToBuffer(publicKeyHex);
+    const ec = new elliptic.ec('secp256k1');
+    const key = ec.keyFromPublic(pubKeyBuffer);
+
+    // Verify the signature
+    return key.verify(transactionHash, signature);
+}
+
+function main() {
+    // Example raw transaction hex
+    const rawTxHex = '0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f990000000000fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000';
+
+    // Public key (compressed public key)
+    const publicKeyHex = '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';  // Replace with actual public key
+
+    // Signature components R and S (from your provided signature)
+    const rHex = 'eb17b7ad6490e7193610ec7afbee1106105708e0a257ebe90be9eb5eda96536e';  // Replace with actual R value
+    const sHex = '2df1621f1ffb1e0e28e7acaa0751d3acb51b0751672ddded23fbe5ff0a2d6bea';  // Replace with actual S value
+
+    // Combine R and S into a signature object
+    const signature = {
+        r: hexToBuffer(rHex),
+        s: hexToBuffer(sHex)
+    };
+
+    // Step 1: Prepare the transaction hash
+    const txBytes = hexToBuffer(rawTxHex);
+    const txData = Buffer.concat([txBytes, Buffer.from([0x01])]);  // Append SIGHASH_ALL (0x01) to the transaction data
+    const txHash = doubleSha256(txData);
+
+    // Step 2: Verify the signature
+    const isValid = verifySignature(txHash, signature, publicKeyHex);
+
+    if (isValid) {
+        console.log("Signature is valid!");
+    } else {
+        console.log("Signature is invalid!");
+    }
+}
+
+main();
 
 
