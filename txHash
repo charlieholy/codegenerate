@@ -1,0 +1,18 @@
+const crypto = require('crypto');
+
+// Raw Bitcoin transaction (replace with your own raw transaction)
+const rawTransactionHex = '0200000001d220eff17da279f3b80f9c944542ed52561a064fd5dc2a17667b4fde33768f99000000006a47304402202cc208654e54656404ee47dabe872ec7e1bbc28b29657307900a6fea3007c0c302205b89a7e201d1675d9f34d5805274b8a79f374878f29bf49443975e4b3713e80b01210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798fdffffff01c05f794d000000001976a91406afd46bcdfd22ef94ac122aa11f241244a37ecc88ac00000000';
+
+// Convert the raw transaction hex string to a buffer
+const rawTransactionBuffer = Buffer.from(rawTransactionHex, 'hex');
+
+// First SHA-256 hash (1st pass)
+const firstHash = crypto.createHash('sha256').update(rawTransactionBuffer).digest();
+
+// Second SHA-256 hash (2nd pass)
+const secondHash = crypto.createHash('sha256').update(firstHash).digest();
+
+// The TXID is the reverse of the second hash (little-endian)
+const txid = secondHash.reverse().toString('hex');
+
+console.log('TXID:', txid);
