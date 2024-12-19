@@ -1,0 +1,34 @@
+const bitcoin = require('bitcoinjs-lib');
+
+// Define the input and output
+const inputs = [
+  { txid: "998f7633de4f7b66172adcd54f061a5652ed4245949c0fb8f379a27df1ef20d2", vout: 0 }
+];
+const outputs = [
+  { address: "mg8Jz5776UdyiYcBb9Z873NTozEiADRW5H", amount: 12.998 }
+];
+
+// Function to create the raw transaction
+function createRawTransaction(inputs, outputs, network = bitcoin.networks.testnet) {
+  const tx = new bitcoin.Transaction();
+
+  // Add inputs
+  inputs.forEach((input) => {
+    tx.addInput(Buffer.from(input.txid, 'hex').reverse(), input.vout, 0xfffffffd); // Reverse txid bytes
+  });
+
+  // Add outputs
+  outputs.forEach((output) => {
+    const value = Math.round(output.amount * 1e8); // Convert BTC to satoshis
+    const addressScript = bitcoin.address.toOutputScript(output.address, network);
+    tx.addOutput(addressScript, value);
+  });
+
+  // Serialize and return the raw transaction hex
+  return tx.toHex();
+}
+
+// Create the raw transaction
+const rawTransaction = createRawTransaction(inputs, outputs);
+
+console.log("Raw Transaction:", rawTransaction);
